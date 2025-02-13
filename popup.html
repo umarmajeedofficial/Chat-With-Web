@@ -1,18 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>DeepSeek Assistant</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Chat with Web Using DeepSeek</title>
+    <link rel="stylesheet" href="popup.css">
 </head>
-<body>
+<body class="popup-body">
     <div class="container">
-        <h1>DeepSeek Web Assistant</h1>
-        <button id="summarizeButton">Summarize Page</button>
-        <div class="query-section">
-            <input type="text" id="questionInput" placeholder="Ask about page content...">
-            <button id="askButton">Ask</button>
+        <header>
+            <h1>Chat with Web Using DeepSeek</h1>
+            <button id="newChat" class="button" title="New Chat">New Chat</button>
+        </header>
+        <div id="chatContainer" class="chat-container"></div>
+        <div class="input-area">
+            <button id="summarize" class="button" title="Summarize Page">Summarize</button>
+            <div class="input-wrapper">
+                <input type="text" id="queryInput" placeholder="Ask about page content...">
+                <button id="ask" class="button" disabled>Ask</button>
+            </div>
         </div>
-        <div id="result"></div>
+        <div id="status"></div>
     </div>
     <script src="popup.js"></script>
 </body>
