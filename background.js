@@ -2,25 +2,21 @@ const API_KEY = 'f9ecbc52f9be4724b6f5d0d599f580b7'; // ⚠️ INSECURE - FOR TES
 const API_URL = 'https://api.aimlapi.com/v1/chat/completions';
 
 
-// Session cache
-const sessionCache = new Map();
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "process") {
-        handleRequest(request, sender.tab.id, sendResponse);
-        return true;
-    }
-});
-
-async function handleRequest(request, tabId, sendResponse) {
+async function handleRequest(request, sendResponse) {
     try {
-        // Get cached content or use new
-        const context = sessionCache.get(tabId)?.content || request.context;
-        
-        // Classify query
-        const isTechnical = await classifyQuery(request.content);
-        const model = isTechnical ? 'deepseek/deepseek-r1' : 'deepseek/deepseek-chat';
+        // Validate request
+        if (!request.content) {
+            throw new Error('Empty query content');
+        }
 
+        // Classify query
+        const queryType = await classifyQuery(request.content);
+        const model = queryType === 'critical' 
+            ? 'deepseek/deepseek-r1' 
+            : 'deepseek/deepseek-chat';
+
+        // API call
         const response = await fetch('https://api.aimlapi.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -28,53 +24,71 @@ async function handleRequest(request, tabId, sendResponse) {
                 'Authorization': `Bearer ${API_KEY}`
             },
             body: JSON.stringify({
-                model: model,
+                model,
                 messages: [{
-                    role: "system",
-                    content: `You are a helpful assistant. Current page context: ${context?.substring(0, 3000) || 'No context'}`
-                }, {
                     role: "user",
-                    content: request.content
+                    content: request.context 
+                        ? `Context: ${request.context}\n\nQuestion: ${request.content}`
+                        : request.content
                 }],
                 temperature: 0.7,
                 max_tokens: 500
             })
         });
 
-        const data = await response.json();
-        sendResponse({ result: data.choices[0].message.content });
+        // Handle API errors
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+        }
 
-        // Update cache
-        sessionCache.set(tabId, {
-            content: context,
-            history: [...(sessionCache.get(tabId)?.history || []), request]
+        const data = await response.json();
+        
+        // Validate response structure
+        if (!data?.choices?.[0]?.message?.content) {
+            throw new Error('Invalid API response format');
+        }
+
+        sendResponse({ 
+            result: data.choices[0].message.content 
         });
 
     } catch (error) {
-        console.error('Background error:', error);
-        sendResponse({ error: error.message });
+        console.error('Error:', error);
+        sendResponse({ 
+            error: error.message || 'Unknown error occurred'
+        });
     }
 }
 
 async function classifyQuery(query) {
-    const response = await fetch('https://api.aimlapi.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({
-            model: 'deepseek/deepseek-v3',
-            messages: [{
-                role: "system",
-                content: "Classify if this query requires technical expertise (1) or general knowledge (0)"
-            }, {
-                role: "user",
-                content: query
-            }]
-        })
-    });
-    
-    const data = await response.json();
-    return data.choices[0].message.content.includes('1');
+    try {
+        const response = await fetch('https://api.aimlapi.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'deepseek/deepseek-v3',
+                messages: [{
+                    role: "system",
+                    content: "Is this query technical/critical? Answer yes/no:"
+                }, {
+                    role: "user",
+                    content: query
+                }],
+                max_tokens: 10
+            })
+        });
+
+        const data = await response.json();
+        return data.choices[0].message.content.toLowerCase().includes('yes') 
+            ? 'critical' 
+            : 'general';
+
+    } catch (error) {
+        console.error('Classification failed:', error);
+        return 'general';
+    }
 }
