@@ -9,7 +9,9 @@
     "storage",
     "contextMenus"
   ],
-  "host_permissions": ["http://localhost:5000/*"],
+  "host_permissions": [
+    "https://your-cloudflare-worker-url/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "images/icon128.png"
