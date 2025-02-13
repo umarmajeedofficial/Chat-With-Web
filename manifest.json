@@ -1,17 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Web Summarizer",
-  "version": "1.0",
-  "description": "Summarize web pages using AI.",
+  "name": "DeepSeek Web Assistant",
+  "version": "2.0",
+  "description": "AI-powered content analysis with DeepSeek models",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
-],
-
+    "storage",
+    "contextMenus"
+  ],
+  "host_permissions": ["http://localhost:5000/*"],
   "action": {
     "default_popup": "popup.html",
-    "default_icon":"images/icon128.png"  
+    "default_icon": "images/icon128.png"
   },
   "icons": {
     "16": "images/icon16.png",
@@ -20,5 +21,9 @@
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"]
+  }]
 }
