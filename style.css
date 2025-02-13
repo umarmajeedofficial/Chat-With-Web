@@ -146,3 +146,24 @@ button {
     max-width: 300px;
     display: none;
 }
+
+
+
+
+
+.retry-button {
+    background: #ff5722;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+.retry-button:hover {
+    background: #f4511e;
+}
+
+
+
