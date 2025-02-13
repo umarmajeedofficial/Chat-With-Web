@@ -1,4 +1,5 @@
 const API_KEY = 'f9ecbc52f9be4724b6f5d0d599f580b7'; // ⚠️ INSECURE - FOR TESTING ONLY
+const API_URL = 'https://api.aimlapi.com/v1/chat/completions';
 
 // Handle context menu
 chrome.runtime.onInstalled.addListener(() => {
