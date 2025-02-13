@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Web Summarizer</title>
+    <title>DeepSeek Assistant</title>
     <link rel="stylesheet" href="style.css">
-    <script src="popup.js"></script>
 </head>
 <body>
-    <h1>Click to Summarize</h1>
-    <button id="summarizeButton">Summarize</button>
-    <div id="summary"></div>
+    <div class="container">
+        <h1>DeepSeek Web Assistant</h1>
+        <button id="summarizeButton">Summarize Page</button>
+        <div class="query-section">
+            <input type="text" id="questionInput" placeholder="Ask about page content...">
+            <button id="askButton">Ask</button>
+        </div>
+        <div id="result"></div>
+    </div>
+    <script src="popup.js"></script>
 </body>
 </html>
