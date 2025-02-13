@@ -1,43 +1,53 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // Get the "Summarize" button element from popup.html
-    const summarizeButton = document.getElementById("summarizeButton");
+document.addEventListener("DOMContentLoaded", () => {
+  const summarizeButton = document.getElementById("summarizeButton");
+  const askButton = document.getElementById("askButton");
+  const questionInput = document.getElementById("questionInput");
+  const resultDiv = document.getElementById("result");
 
-    // Get the "summary" div element where we will display the summary
-    const summaryDiv = document.getElementById("summary");
+  let pageContent = null;
 
-    summarizeButton.addEventListener("click", () => {
-        // Send a message to the content script to request the page content
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            console.log("Tabs:", tabs);
-            if (tabs && tabs[0]) {
-                chrome.scripting.executeScript(
-                    {
-                        target: { tabId: tabs[0].id },
-                        function: () => {
-                            return document.body.innerText; // Get the entire HTML content of the page in body tag
-                        }
-                    },
-                    (result) => {
-                        if (chrome.runtime.lastError) {
-                            console.error(chrome.runtime.lastError);
-                        } else {
-                            const pageContent = result[0].result;
-                            // Send the page content to the background script for summarization
-                            chrome.runtime.sendMessage({ action: "summarizePage", content: pageContent }, (response) => {
-                                console.log('inside sendMessage');
-                                if (response && response.action === "summaryResponse") {
-                                    console.log('Received summary response:', response);
-                                    if (response.summary) {
-                                        summaryDiv.textContent = response.summary;
-                                    } else {
-                                        summaryDiv.textContent = "Error: Unable to summarize the page.";
-                                    }
-                                }
-                            });
-                        }
-                    }
-                );
-            }
-        });
+  const showLoader = () => resultDiv.innerHTML = '<div class="loader"></div>';
+  const showError = (msg) => resultDiv.innerHTML = `<div class="error">${msg}</div>`;
+
+  summarizeButton.addEventListener("click", () => {
+    showLoader();
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        func: () => document.documentElement.outerHTML
+      }, (result) => {
+        pageContent = result[0].result;
+        chrome.runtime.sendMessage({
+          action: "processContent",
+          type: "summary",
+          content: { html: pageContent }
+        }, handleResponse);
+      });
     });
+  });
+
+  askButton.addEventListener("click", () => {
+    const question = questionInput.value.trim();
+    if (!question) return;
+    
+    showLoader();
+    chrome.runtime.sendMessage({
+      action: "processContent",
+      type: "question",
+      content: {
+        question: question,
+        context: pageContent
+      }
+    }, handleResponse);
+  });
+
+  function handleResponse(response) {
+    if (response.error) {
+      showError(response.error);
+    } else if (response.summary) {
+      resultDiv.innerHTML = `<div class="summary"><h3>Summary:</h3>${response.summary}</div>`;
+    } else if (response.answer) {
+      resultDiv.innerHTML = `<div class="answer"><h3>Answer:</h3>${response.answer}</div>`;
+    }
+  }
 });
