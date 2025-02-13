@@ -1,4 +1,4 @@
-const CLOUDFLARE_WORKER_URL = "https://your-cloudflare-worker-url";
+const CLOUDFLARE_WORKER_URL = "https://deepseek-api.umarmajeedofficial.workers.dev/";
 
 // Handle context menu for highlighted text
 chrome.runtime.onInstalled.addListener(() => {
