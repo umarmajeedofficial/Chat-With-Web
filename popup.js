@@ -3,26 +3,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const askButton = document.getElementById("askButton");
   const questionInput = document.getElementById("questionInput");
   const resultDiv = document.getElementById("result");
-
-  let pageContent = null;
+  let pageContent = '';
 
   const showLoader = () => resultDiv.innerHTML = '<div class="loader"></div>';
   const showError = (msg) => resultDiv.innerHTML = `<div class="error">${msg}</div>`;
 
-  summarizeButton.addEventListener("click", () => {
+  summarizeButton.addEventListener("click", async () => {
     showLoader();
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        func: () => document.documentElement.outerHTML
-      }, (result) => {
-        pageContent = result[0].result;
-        chrome.runtime.sendMessage({
-          action: "processContent",
-          type: "summary",
-          content: { html: pageContent }
-        }, handleResponse);
-      });
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    const result = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => document.body.innerText
+    });
+    
+    pageContent = result[0].result;
+    
+    chrome.runtime.sendMessage({
+      action: "process",
+      type: "summary",
+      content: pageContent
+    }, response => {
+      if (response.error) showError(response.error);
+      else resultDiv.innerHTML = `<div class="summary">${response.result}</div>`;
     });
   });
 
@@ -32,22 +35,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
     showLoader();
     chrome.runtime.sendMessage({
-      action: "processContent",
+      action: "process",
       type: "question",
-      content: {
-        question: question,
-        context: pageContent
-      }
-    }, handleResponse);
+      content: question,
+      context: pageContent
+    }, response => {
+      if (response.error) showError(response.error);
+      else resultDiv.innerHTML = `<div class="answer">${response.result}</div>`;
+    });
   });
-
-  function handleResponse(response) {
-    if (response.error) {
-      showError(response.error);
-    } else if (response.summary) {
-      resultDiv.innerHTML = `<div class="summary"><h3>Summary:</h3>${response.summary}</div>`;
-    } else if (response.answer) {
-      resultDiv.innerHTML = `<div class="answer"><h3>Answer:</h3>${response.answer}</div>`;
-    }
-  }
 });
