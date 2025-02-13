@@ -3,28 +3,17 @@
 <head>
     <title>DeepSeek Assistant</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>DeepSeek Assistant</h1>
-            <button id="clearSession" class="icon-button">🗑️</button>
+        <h1>DeepSeek Web Assistant</h1>
+        <button id="summarizeButton">Summarize Page</button>
+        <div class="query-section">
+            <input type="text" id="questionInput" placeholder="Ask about page content...">
+            <button id="askButton">Ask</button>
         </div>
-        
-        <div class="chat-container" id="chatContainer"></div>
-        <div id="errorContainer" class="error-container"></div>
-        
-        <div class="input-section">
-            <button id="summarizeButton" class="action-button">📄 Summarize</button>
-            <div class="input-group">
-                <input type="text" id="questionInput" placeholder="Ask about the page...">
-                <button id="askButton" class="send-button">➤</button>
-            </div>
-        </div>
+        <div id="result"></div>
     </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>
