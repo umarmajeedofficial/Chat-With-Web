@@ -1,6 +1,6 @@
-const CLOUDFLARE_WORKER_URL = "https://deepseek-api.umarmajeedofficial.workers.dev";
+const API_KEY = 'f9ecbc52f9be4724b6f5d0d599f580b7'; // ⚠️ INSECURE - FOR TESTING ONLY
 
-// Handle context menu for highlighted text
+// Handle context menu
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "askHighlight",
@@ -9,37 +9,50 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Handle messages from popup/content scripts
+// Message handler
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "processContent") {
-    handleContentProcessing(request, sendResponse);
-    return true; // Required for async response
+  if (request.action === "process") {
+    handleRequest(request, sendResponse);
+    return true;
   }
 });
 
-// Handle highlighted text
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "askHighlight" && info.selectionText) {
-    chrome.tabs.sendMessage(tab.id, {
-      action: "handleHighlight",
-      selection: info.selectionText
-    });
-  }
-});
-
-// Process content with Cloudflare Worker
-async function handleContentProcessing(request, sendResponse) {
+// Handle requests
+async function handleRequest(request, sendResponse) {
   try {
-    const endpoint = request.type === 'question' ? '/ask' : '/summarize';
-    const response = await fetch(`${CLOUDFLARE_WORKER_URL}${endpoint}`, {
+    const response = await fetch('https://api.aimlapi.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request.content)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: getModel(request.type),
+        messages: createMessages(request)
+      })
     });
+
     const data = await response.json();
-    sendResponse(data);
+    sendResponse({ result: data.choices[0].message.content });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('API Error:', error);
     sendResponse({ error: "Service unavailable. Try again later." });
   }
+}
+
+function getModel(type) {
+  return type === 'critical' ? 'deepseek/deepseek-r1' : 'deepseek/deepseek-chat';
+}
+
+function createMessages(request) {
+  if (request.type === 'summary') {
+    return [{
+      role: "user",
+      content: `Summarize this content: ${request.content.substring(0, 5000)}`
+    }];
+  }
+  return [{
+    role: "user",
+    content: `Context: ${request.context}\n\nQuestion: ${request.content}`
+  }];
 }
