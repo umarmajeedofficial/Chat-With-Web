@@ -1,4 +1,4 @@
-const API_KEY = 'f9ecbc52f9be4724b6f5d0d599f580b7';
+const API_KEY = 'a6c6ba926382487d9f34370a3434a114';
 const API_URL = 'https://api.aimlapi.com/v1/chat/completions';
 
 let session = {
@@ -18,7 +18,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "process") {
     handleRequest(request, sendResponse);
-    return true;
+    return true; // Keep channel open for async response
   }
   if (request.action === "clearHistory") {
     session = { history: [], context: null };
@@ -31,7 +31,15 @@ async function handleRequest(request, sendResponse) {
     const messages = request.reset ? 
       [{ role: "system", content: "You are a helpful assistant." }] : 
       session.history;
-    
+
+    // Add context if available
+    if (request.context) {
+      messages.push({ 
+        role: "system", 
+        content: `Highlighted context: ${request.context}`
+      });
+    }
+
     messages.push({ role: "user", content: request.content });
 
     const response = await fetch(API_URL, {
@@ -47,9 +55,14 @@ async function handleRequest(request, sendResponse) {
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
     const result = data.choices[0].message.content;
     
+    // Update session
     session.history = messages.concat([{ role: "assistant", content: result }]);
     session.context = request.context || session.context;
     chrome.storage.local.set({ session });
@@ -57,7 +70,11 @@ async function handleRequest(request, sendResponse) {
     sendResponse({ result });
   } catch (error) {
     console.error('API Error:', error);
-    sendResponse({ error: "Service unavailable. Try again later." });
+    sendResponse({ 
+      error: error.message.includes('Failed to fetch') 
+        ? "Network error. Check your internet connection."
+        : "Service unavailable. Please try again later."
+    });
   }
 }
 
