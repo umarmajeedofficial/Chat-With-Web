@@ -1,23 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat with Web Using DeepSeek</title>
+    <title>DeepSeek Web Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="popup.css">
 </head>
 <body class="popup-body">
     <div class="container">
         <header>
-            <h1>Chat with Web Using DeepSeek</h1>
-            <button id="newChat" class="button" title="New Chat">New Chat</button>
+            <h1>Chat With Web Using DeepSeek</h1>
+            <div class="header-controls">
+                <button id="toggleHighlight" class="toggle-btn toggle-on">Highlight To Ask</button>
+                <button id="newChat" class="button new-chat-btn">New Chat</button>
+            </div>
         </header>
+        
         <div id="chatContainer" class="chat-container"></div>
+        
         <div class="input-area">
-            <button id="summarize" class="button" title="Summarize Page">Summarize</button>
+            <button id="summarize" class="button">Summarize Web</button>
             <div class="input-wrapper">
                 <input type="text" id="queryInput" placeholder="Ask about page content...">
-                <button id="ask" class="button" disabled>Ask</button>
             </div>
+            <button id="ask" class="button ask-btn" disabled>Ask DeepSeek</button>
         </div>
+        
         <div id="status"></div>
     </div>
     <script src="popup.js"></script>
