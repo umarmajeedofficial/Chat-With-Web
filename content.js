@@ -73,27 +73,16 @@ style.textContent = `
         margin-top: 8px;
     }
 
-    .highlight-quick-ask-btn {
+    .highlight-submit-btn {
         background: #2196F3;
         color: white;
         border: none;
         padding: 8px 12px;
         border-radius: 4px;
         cursor: pointer;
-        flex: 1;
+        width: 100%;
     }
 
-    .highlight-submit-btn {
-        background: #4CAF50;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        flex: 1;
-    }
-
-    .highlight-quick-ask-btn:hover, 
     .highlight-submit-btn:hover {
         opacity: 0.9;
     }
@@ -142,10 +131,9 @@ function showHighlightPopup(selection, event) {
     highlightPopup.innerHTML = `
         <div class="highlight-popup-content">
             <div class="highlight-context">${selection}</div>
-            <input type="text" class="highlight-query-input" placeholder="Ask about the highlighted text..." autofocus>
+            <input type="text" class="highlight-query-input" placeholder="Ask about the highlighted text (optional)..." autofocus>
             <div class="button-group">
-                <button class="highlight-quick-ask-btn">Ask DeepSeek</button>
-                <button class="highlight-submit-btn">Send</button>
+                <button class="highlight-submit-btn">Ask DeepSeek</button>
             </div>
         </div>
     `;
@@ -155,10 +143,8 @@ function showHighlightPopup(selection, event) {
     highlightPopup.style.top = `${rect.bottom + window.scrollY + 10}px`;
 
     const input = highlightPopup.querySelector('.highlight-query-input');
-    const quickAskButton = highlightPopup.querySelector('.highlight-quick-ask-btn');
     const submitButton = highlightPopup.querySelector('.highlight-submit-btn');
     
-    quickAskButton.addEventListener('click', () => handleQuickAsk(selection));
     submitButton.addEventListener('click', () => handleButtonClick(selection, input));
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleButtonClick(selection, input);
@@ -167,22 +153,11 @@ function showHighlightPopup(selection, event) {
     shadowRoot.appendChild(highlightPopup);
 }
 
-function handleQuickAsk(context) {
-    handleHighlightQuery(context, "Please explain this highlighted text");
+function handleButtonClick(context, input) {
+    const question = input.value.trim() || "Please explain this highlighted text";
+    handleHighlightQuery(context, question);
     shadowRoot.removeChild(highlightPopup);
     highlightPopup = null;
-}
-
-function handleButtonClick(context, input) {
-    const question = input.value.trim();
-    if (question) {
-        handleHighlightQuery(context, question);
-        shadowRoot.removeChild(highlightPopup);
-        highlightPopup = null;
-    } else {
-        input.style.borderColor = '#ff0000';
-        setTimeout(() => input.style.borderColor = '#ddd', 1000);
-    }
 }
 
 function getSelectionRect() {
@@ -254,4 +229,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     }
 });
-
